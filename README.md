@@ -1,70 +1,131 @@
-# Session iOS
+# Lux Messenger iOS
 
-[Download Session on the App Store](https://getsession.org/iphone)
+> Private messaging on the Lux Network - A fork of [Session iOS](https://github.com/session-foundation/session-ios)
 
-## Summary
+## Overview
 
-Session integrates directly with [Oxen Service Nodes](https://docs.oxen.io/about-the-oxen-blockchain/oxen-service-nodes), which are a set of distributed, decentralized and Sybil resistant nodes. Service Nodes act as servers which store messages, and a set of nodes which allow for onion routing functionality obfuscating users' IP addresses. For a full understanding of how Session works, read the [Session Whitepaper](https://getsession.org/whitepaper).
+Lux Messenger iOS is a fork of Session iOS, intended to connect to the Lux Network's SessionVM instead of the Oxen network. This app provides end-to-end encrypted messaging with post-quantum cryptographic protection.
 
-<img src="https://i.imgur.com/Ioub5bx.png" width="320" />
+## Current Status
 
-## Want to contribute? Found a bug or have a feature request?
+**Integration Status: In Progress**
 
-Please search for any [existing issues](https://github.com/session-foundation/session-ios/issues) that describe your bugs in order to avoid duplicate submissions. Submissions can be made by making a pull request to our dev branch. If you don't know where to start contributing, try reading the Github issues page for ideas.
+The iOS app currently uses `libsession-util` for networking, which has hardcoded network endpoints. Full integration with the Lux SessionVM requires modifications to the underlying C++ library.
 
-## Build instructions
+### What Works
+- Building and running the app
+- Core messaging functionality (against Session mainnet)
 
-Build instructions can be found in [BUILDING.md](BUILDING.md).
+### What Needs Work
+- Network configuration to connect to Lux SessionVM
+- libsession-util modifications for custom network support
+- Branding updates (Lux Messenger)
 
-## Translations
+## Building
 
-Want to help us translate Session into your language? You can do so at https://getsession.org/translate !
+### Prerequisites
 
-## Verifying signatures
+- Xcode 15.0+
+- iOS 15.0+ deployment target
+- CocoaPods
 
-**Step 1:**
+### Build Steps
 
-Add Jason's GPG key. Jason Rhinelander, a member of the [Session Technology Foundation](https://session.foundation/) and is the current signer for all Session iOS releases. His GPG key can be found on his GitHub and other sources.
-
-```sh
-wget https://github.com/jagerman.gpg
-gpg --import jagerman.gpg
+1. Clone the repository:
+```bash
+git clone https://github.com/lux-tel/session-ios
+cd session-ios
 ```
 
-**Step 2:**
-
-Get the signed hashes for this release. `SESSION_VERSION` needs to be updated for the release you want to verify.
-
-```sh
-export SESSION_VERSION=2.9.1
-wget https://github.com/session-foundation/session-ios/releases/download/$SESSION_VERSION/signature.asc
+2. Install dependencies:
+```bash
+pod install
 ```
 
-**Step 3:**
-
-Verify the signature of the hashes of the files.
-
-```sh
-gpg --verify signature.asc 2>&1 |grep "Good signature from"
+3. Open the workspace:
+```bash
+open Session.xcworkspace
 ```
 
-The command above should print "`Good signature from "Jason Rhinelander...`". If it does, the hashes are valid but we still have to make the sure the signed hashes match the downloaded files.
+4. Build and run in Xcode.
 
-**Step 4:**
-
-Make sure the two commands below return the same hash for the file you are checking. If they do, file is valid.
+## Architecture
 
 ```
-sha256sum session-$SESSION_VERSION.ipa
-grep .ipa signature.asc
+Session (iOS App)
+├── SessionMessagingKit    # Message handling, encryption
+├── SessionNetworkingKit   # Network layer (uses LibSession)
+├── SessionUtilitiesKit    # Shared utilities
+└── SessionUIKit           # UI components
+
+SessionNetworkingKit
+└── LibSession+Networking.swift
+    └── libsession-util (C++ native library)
+        └── Hardcoded network endpoints
 ```
+
+## Configuration for Lux Network
+
+### Current Limitation
+
+The network configuration in iOS is handled by `libsession-util`, a C++ library with hardcoded endpoints:
+
+```cpp
+// In libsession-util/src/session_network.cpp
+constexpr auto file_server = "filev2.getsession.org"sv;
+```
+
+### Planned Approach
+
+To enable Lux network connectivity:
+
+1. **Modify libsession-util** (`lux-tel/libsession-util`)
+   - Add environment-based configuration
+   - Support custom seed node URLs
+   - Support custom file server URLs
+
+2. **Update iOS integration**
+   - Pass Lux network configuration to LibSession
+   - Update UI branding
+
+## Related Repositories
+
+| Repository | Description |
+|------------|-------------|
+| [luxfi/session](https://github.com/luxfi/session) | Go SessionVM + API layer |
+| [luxcpp/session](https://github.com/luxcpp/session) | C++ storage server |
+| [lux-tel/libsession-util](https://github.com/lux-tel/libsession-util) | Native library (needs modification) |
+| [lux-tel/session-desktop](https://github.com/lux-tel/session-desktop) | Desktop client (configured) |
+| [lux-tel/session-android](https://github.com/lux-tel/session-android) | Android client |
+
+## Development
+
+### Key Files
+
+| File | Description |
+|------|-------------|
+| `SessionNetworkingKit/SessionNetwork/SessionNetwork.swift` | Network API server config |
+| `SessionNetworkingKit/LibSession/LibSession+Networking.swift` | LibSession integration |
+| `SessionUtilitiesKit/General/Feature.swift` | Feature flags |
+| `Session/Meta/SessionApp.swift` | App entry point |
+
+### Debug Configuration
+
+Feature flags can be enabled in developer settings for debugging:
+- `forceOffline` - Test offline behavior
+- `truncatePubkeysInLogs` - Privacy in debug logs
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Submit a pull request
 
 ## License
 
-Copyright 2011 Whisper Systems
+GPL-3.0 - Same as upstream Session iOS
 
-Copyright 2013-2017 Open Whisper Systems
+## Upstream
 
-Copyright 2019-2021 The Oxen Project
-
-Licensed under the GPLv3: http://www.gnu.org/licenses/gpl-3.0.html
+This project is a fork of [Session iOS](https://github.com/session-foundation/session-ios) by the Session Technology Foundation.
