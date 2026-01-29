@@ -23,29 +23,48 @@ The iOS app uses `libsession-util` for networking. Full Pars Network integration
 - libsession-util modifications
 - Pars branding updates
 
-## Building
+## Installation
 
-### Prerequisites
+### Option 1: Build from Source (Recommended)
 
-- Xcode 16.2+ (or latest stable version)
-- iOS 15.0+ deployment target
+**Prerequisites:**
+- Mac with Xcode 16.2+
+- Apple Developer account (free tier works)
+- iOS 15.0+ device
 
-### Build Steps
-
-1. Clone the repository:
+**Steps:**
 ```bash
 git clone https://github.com/parsdao/pars-ios
 cd pars-ios
-```
-
-2. Open the project:
-```bash
 open Session.xcodeproj
 ```
 
-3. In Xcode, change the Team in TARGETS to your own Apple Developer account
+In Xcode:
+1. Change Team in all TARGETS to your Apple Developer account
+2. Connect your iOS device
+3. Build and run (Cmd+R)
 
-4. Build and run (Cmd+R)
+### Option 2: AltStore (No Mac Required)
+
+[AltStore](https://altstore.io/) allows sideloading apps using a free Apple ID:
+
+1. Install AltStore on your device
+2. Download the source and build an IPA, or wait for community builds
+3. Open the IPA with AltStore
+
+**Note:** Free Apple ID certificates expire every 7 days - AltStore auto-refreshes them.
+
+### Option 3: TestFlight (Coming Soon)
+
+We're working on TestFlight distribution for easier installation. Join the waitlist at [pars.network](https://pars.network).
+
+### Why No Direct Download?
+
+Apple requires all iOS apps to be cryptographically signed. Unlike Android, there's no way to install unsigned apps. Options are:
+- **App Store** - Requires Apple review (in progress)
+- **TestFlight** - For beta testing (coming soon)
+- **AltStore** - Self-signing with your Apple ID
+- **Build from source** - Full control
 
 ## Architecture
 

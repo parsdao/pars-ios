@@ -9,7 +9,7 @@ on:
       version:
         description: 'Version tag (e.g., v1.0.0)'
         required: true
-        default: 'v1.0.0'
+        default: 'v0.1.0'
 
 permissions:
   contents: write
@@ -30,43 +30,14 @@ jobs:
             -project Session.xcodeproj \
             -scheme Session
 
-      - name: Build Archive
+      - name: Build (Simulator)
         run: |
-          xcodebuild archive \
+          xcodebuild build \
             -project Session.xcodeproj \
             -scheme Session \
-            -archivePath build/Session.xcarchive \
+            -destination 'platform=iOS Simulator,name=iPhone 15,OS=latest' \
             CODE_SIGNING_ALLOWED=NO \
             | xcpretty || true
-
-      - name: Package IPA (unsigned)
-        run: |
-          mkdir -p build/Payload
-          cp -r build/Session.xcarchive/Products/Applications/Session.app build/Payload/ 2>/dev/null || true
-          cd build && zip -r Pars-iOS-unsigned.ipa Payload || true
-
-      - name: Upload Archive
-        uses: actions/upload-artifact@v4
-        with:
-          name: pars-ios-archive
-          path: build/Session.xcarchive
-          if-no-files-found: warn
-
-      - name: Upload IPA
-        uses: actions/upload-artifact@v4
-        with:
-          name: pars-ios-ipa
-          path: build/Pars-iOS-unsigned.ipa
-          if-no-files-found: warn
-
-  create_release:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - name: Download all artifacts
-        uses: actions/download-artifact@v4
-        with:
-          path: artifacts
 
       - name: Get version
         id: version
@@ -82,11 +53,29 @@ jobs:
         with:
           tag: ${{ steps.version.outputs.VERSION }}
           name: "Pars iOS ${{ steps.version.outputs.VERSION }}"
-          artifacts: "artifacts/**/*.ipa"
           body: |
             ## Pars Messenger iOS ${{ steps.version.outputs.VERSION }}
 
-            **Note:** This is an unsigned IPA. To install:
-            1. Sign with your own Apple Developer certificate
-            2. Or build from source using Xcode
+            ### Installation Options
+
+            **Option 1: Build from Source** (Recommended)
+            ```bash
+            git clone https://github.com/parsdao/pars-ios
+            cd pars-ios
+            open Session.xcodeproj
+            ```
+            Then in Xcode: Change Team → Connect device → Build (Cmd+R)
+
+            **Option 2: AltStore**
+            Use [AltStore](https://altstore.io/) to sideload with your Apple ID.
+
+            **Option 3: TestFlight** (Coming Soon)
+            Join waitlist at [pars.network](https://pars.network)
+
+            ### Why No IPA Download?
+            Apple requires all iOS apps to be signed. Without an Apple Developer certificate in CI, we cannot produce installable IPAs. See README for details.
+
+            ### Build Status
+            ✅ Compiles successfully on Xcode 16.2
           draft: true
+          allowUpdates: true
