@@ -27,9 +27,8 @@ The iOS app uses `libsession-util` for networking. Full Pars Network integration
 
 ### Prerequisites
 
-- Xcode 15.0+
+- Xcode 16.2+ (or latest stable version)
 - iOS 15.0+ deployment target
-- CocoaPods
 
 ### Build Steps
 
@@ -39,17 +38,14 @@ git clone https://github.com/parsdao/pars-ios
 cd pars-ios
 ```
 
-2. Install dependencies:
+2. Open the project:
 ```bash
-pod install
+open Session.xcodeproj
 ```
 
-3. Open the workspace:
-```bash
-open Session.xcworkspace
-```
+3. In Xcode, change the Team in TARGETS to your own Apple Developer account
 
-4. Build and run in Xcode (Cmd+R)
+4. Build and run (Cmd+R)
 
 ## Architecture
 
