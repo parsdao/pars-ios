@@ -1,0 +1,92 @@
+name: Pars iOS Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version tag (e.g., v1.0.0)'
+        required: true
+        default: 'v1.0.0'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: macos-14
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_16.2.app || sudo xcode-select -s /Applications/Xcode_16.1.app || sudo xcode-select -s /Applications/Xcode_16.0.app || sudo xcode-select -s /Applications/Xcode_15.4.app
+
+      - name: Resolve Swift packages
+        run: |
+          xcodebuild -resolvePackageDependencies \
+            -project Session.xcodeproj \
+            -scheme Session
+
+      - name: Build Archive
+        run: |
+          xcodebuild archive \
+            -project Session.xcodeproj \
+            -scheme Session \
+            -archivePath build/Session.xcarchive \
+            CODE_SIGNING_ALLOWED=NO \
+            | xcpretty || true
+
+      - name: Package IPA (unsigned)
+        run: |
+          mkdir -p build/Payload
+          cp -r build/Session.xcarchive/Products/Applications/Session.app build/Payload/ 2>/dev/null || true
+          cd build && zip -r Pars-iOS-unsigned.ipa Payload || true
+
+      - name: Upload Archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: pars-ios-archive
+          path: build/Session.xcarchive
+          if-no-files-found: warn
+
+      - name: Upload IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: pars-ios-ipa
+          path: build/Pars-iOS-unsigned.ipa
+          if-no-files-found: warn
+
+  create_release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Get version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "VERSION=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+          else
+            echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create Release
+        uses: ncipollo/release-action@v1
+        with:
+          tag: ${{ steps.version.outputs.VERSION }}
+          name: "Pars iOS ${{ steps.version.outputs.VERSION }}"
+          artifacts: "artifacts/**/*.ipa"
+          body: |
+            ## Pars Messenger iOS ${{ steps.version.outputs.VERSION }}
+
+            **Note:** This is an unsigned IPA. To install:
+            1. Sign with your own Apple Developer certificate
+            2. Or build from source using Xcode
+          draft: true
